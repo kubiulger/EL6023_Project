@@ -48,7 +48,7 @@ classdef NRgNBTxFD < matlab.System
             % Create the OFDM grid representing the array of modulation
             % symbols to be transmitted
             txGrid = nrResourceGrid(obj.carrierConfig, ...
-                obj.nant);
+                obj.pdschConfig.NumLayers);
             
                        
             % Get indices on where the PDSCH is allocated
@@ -77,7 +77,8 @@ classdef NRgNBTxFD < matlab.System
             
             % Encode the DL-SCH transport blocks.  We use a redundancy
             % version (rv) = 0 since we are not simulating HARQ now.
-            rv = [0,0];
+ %           rv = [0,0];
+            rv=0;
             codedTrBlock = obj.encDLSCH(obj.pdschConfig.Modulation, ...
                 obj.pdschConfig.NumLayers, pdschInfo.G, rv);
             
@@ -85,12 +86,10 @@ classdef NRgNBTxFD < matlab.System
             pdschSymbols = nrPDSCH(obj.carrierConfig, obj.pdschConfig, ...
                 codedTrBlock);
           
-           [pdschAntSymbols,pdschAntIndices] = hPRGPrecodeTEST(size(txGrid),...
-                obj.carrierConfig.NStartGrid,pdschSymbols,...
-                pdschInd,transpose(Fprecode));
+
 
             % Map the modulated symbols to the OFDM grid
-            txGrid(pdschAntIndices) = pdschAntSymbols;   
+            txGrid(pdschInd) = pdschSymbols;   
         end
         
     end

@@ -50,34 +50,16 @@ classdef NRUERxFD < matlab.System
     methods (Access = protected)
         
         
-        function stepImpl(obj, rxGrid, G, noiseVar)
+        function stepImpl(obj, rxGrid, chanGrid, noiseVar)
             % Demodulates and decodes one slot of data
-            
+            chanGrid = permute(chanGrid,[4,3,1,2]);
+            rxGrid = permute(rxGrid,[3,2,1]);
             % Get PDSCH received symbols and channel estimates
             % from received grid 
             [pdschInd,pdschInfo] = nrPDSCHIndices(...
                 obj.carrierConfig, obj.pdschConfig);
-            
-            
-            % LMMMMMMMMMSE , needs to be fixed
-            alp = 1/noiseVar/16;
-            F = zeros(size(permute(G,[2,1,3,4])));
-            for k = 1:732
-                for j = 1:14
-                    H = G(:,:,k,j);
-                    F(:,:,k,j) = alp*(alp*(H'*H)+eye(size(H'*H)))^-1*H';
-                end
-            end
-            rxGrid = reshape(rxGrid,8,1,732,14);
-            
-            rxGridEq = squeeze(pagemtimes(F,rxGrid));
-            HestEq = squeeze(pagemtimes(F,G));
-            HestEq = squeeze(pagemtimes(HestEq,ones(5,1)));
-            HestEq = permute(HestEq,[2,3,1]);
-            rxGridEq = permute(rxGridEq,[2,3,1]);
-            
-            [pdschRx, pdschHest] = nrExtractResources(pdschInd, rxGridEq,...
-                HestEq);
+            [pdschRx, pdschHest] = nrExtractResources(pdschInd, rxGrid,...
+                chanGrid);
             
             % TODO:  Perform the MMSE equalization using the
             % nrEqualizeMMSE() function.
@@ -131,7 +113,8 @@ classdef NRUERxFD < matlab.System
             % rv = 0,  since we are not using HARQ in this lab.
             %    rv = 0;
             %    obj.rxBit = obj.decDLSCH(...);
-            rv = [0,0];
+%             rv = [0,0];
+            rv=0;
             obj.rxBits = obj.decDLSCH(dlschLLRs,obj.pdschConfig.Modulation,obj.pdschConfig.NumLayers,rv);
         end
         
