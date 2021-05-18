@@ -13,6 +13,8 @@ MIMO Channel for arbitrary number of streams is working, we got the throughput
 
 TODO:
 
-ADD STUFF FOR ANALYSIS
+Add Stuff for analysis
 
+Add comments
 
+Different receivers and stuff
