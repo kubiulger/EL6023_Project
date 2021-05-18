@@ -40,7 +40,7 @@ classdef NRgNBTxFD < matlab.System
     end
     methods (Access = protected)
                
-        function txGrid = stepImpl(obj,Fprecode)
+        function txGrid = stepImpl(obj)
             % step implementation. Creates one slot of samples for each
             % component carrier
             
