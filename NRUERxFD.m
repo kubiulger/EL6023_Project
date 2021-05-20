@@ -55,7 +55,7 @@ classdef NRUERxFD < matlab.System
             Gconj = permute(conj(G),[2,1,3,4]);
             Flmmse = zeros(size(Gconj));
             Qlmmse = zeros([nStreams,nStreams,732,14]);
-            alp = 1/noiseVar/16;
+            alp = 1/noiseVar/nStreams;
             for i=1:732
                 for j = 1:14
                     %LMMSE decoder at each resource element
