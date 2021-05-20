@@ -5,4 +5,4 @@ Project by: Amritpal Singh and Kubilay Ulger
 
 Results at: EL6023_Project.mlx 
 
-Almost done...
+Results can also be seen at EL6023_Project.pdf
