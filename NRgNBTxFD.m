@@ -39,7 +39,7 @@ classdef NRgNBTxFD < matlab.System
     end
     methods (Access = protected)
                
-        function txGrid3D = stepImpl(obj,nStreams)
+        function [txGridPrecoded,Fprecoder] = stepImpl(obj,nStreams,Q)
             txGrid3D=zeros([nStreams,1,732,14]);
             for i=1:nStreams
                 % step implementation. Creates one slot of samples for each
@@ -84,15 +84,21 @@ classdef NRgNBTxFD < matlab.System
                 % Modulate the PDSCH modulation
                 pdschSymbols = nrPDSCH(obj.carrierConfig, obj.pdschConfig, ...
                     codedTrBlock);
-
+                
                 % Map the modulated symbols to the OFDM grid
+                pdschSymbols = pdschSymbols/sqrt(nStreams);
                 txGrid(pdschInd) = pdschSymbols;  
                 txGrid3D(i,1,:,:)=txGrid;
                 
-                % Adding up the bits - CHANGE BY KUBI
-                obj.txBits = [obj.txBits ; BitsPerLayer];
+                % Adding up the bits
+                BitsPerLayer2 = BitsPerLayer{1};
+                obj.txBits = [obj.txBits ; BitsPerLayer2];
                 
             end
+            [V,~] = eig(Q);
+            Fprecoder = V(:,end-nStreams+1:end);
+            %Perfoming matrix multiplication to first 2 dimensions. Hence we precode each RE
+            txGridPrecoded = pagemtimes(Fprecoder,txGrid3D); 
         end
         
     end

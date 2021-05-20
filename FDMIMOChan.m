@@ -95,7 +95,7 @@ classdef FDMIMOChan < matlab.System
     methods (Access = protected)
         
         
-        function [chanGrid, noiseVar] = stepImpl(obj, frameNum, slotNum)
+        function [chanGrid, Q] = stepImpl(obj, frameNum, slotNum)
             % Applies a frequency domain channel and noise
             %
             % Parameters
@@ -163,9 +163,10 @@ classdef FDMIMOChan < matlab.System
                 chanGrid = chanGrid + urxi.*utxi*...
                     obj.gainComplex(i).*exp(1i*phase);
             end
-            
-            % Compute noise variance                        
-            noiseVar = db2pow(obj.Enoise);
+            chanGrid = chanGrid/sqrt(mean(abs(chanGrid).^2,'all'));
+            % Compute covariance                        
+            Q = pagemtimes(permute(conj(chanGrid),[2 1 3 4]),chanGrid);
+            Q = squeeze(mean(mean(Q,3),4));
                                 
                                                 
         end

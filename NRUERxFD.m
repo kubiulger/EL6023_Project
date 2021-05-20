@@ -50,13 +50,38 @@ classdef NRUERxFD < matlab.System
     methods (Access = protected)
         
         
-        function stepImpl(obj, rxGrid3D, chanGrid4D, noiseVar2D, nStreams)
-      
+        function stepImpl(obj, rxGridInput, G, noiseVar, nStreams)
+            %Hermitian of the precoded channel (known at the receiver)
+            Gconj = permute(conj(G),[2,1,3,4]);
+            Flmmse = zeros(size(Gconj));
+            Qlmmse = zeros([nStreams,nStreams,732,14]);
+            alp = 1/noiseVar/16;
+            for i=1:732
+                for j = 1:14
+                    %LMMSE decoder at each resource element
+                    Qlmmse(:,:,i,j) =(alp*(Gconj(:,:,i,j)*G(:,:,i,j))...
+                        +eye(nStreams))^-1;
+                    Flmmse(:,:,i,j)=alp*Qlmmse(:,:,i,j)*Gconj(:,:,i,j); 
+                end
+            end
+            %Mean of Q is taken so that we get an idea on average SNR
+            Qlmmse = mean(Qlmmse,[3,4]);
+            %So now we calculate equalized 1/SNR which is going to be a
+            %real number but we still take the real to make sure
+            Qii = real(diag(Qlmmse));
+            eqNoise = (1./(1./Qii-1));
+            
+            %Equalized channel, it should be close to identity matrix at high SNR
+            Heq = pagemtimes(Flmmse,G);
+            %Performing Equalizer on the received grid
+            rxGrid3D = pagemtimes(Flmmse,rxGridInput);
+           
+
             for i=1:nStreams
                 % Demodulates and decodes one slot of data
-                chanGrid = squeeze(chanGrid4D(i,i,:,:));
+                chanGrid = squeeze(Heq(i,i,:,:));
                 rxGrid = squeeze(rxGrid3D(i,:,:));
-                noiseVar = noiseVar2D(i);
+                noiseVar1 = eqNoise(i);
                 % Get PDSCH received symbols and channel estimates
                 % from received grid 
                 [pdschInd,pdschInfo] = nrPDSCHIndices(...
@@ -71,7 +96,7 @@ classdef NRUERxFD < matlab.System
                 % obj.pdschEq and  channel state information in a structure,
                 % csi.            
                 %    [obj.pdschEq,csi] = nrEqualizeMMSE(...);
-                [obj.pdschEq,csi] = nrEqualizeMMSE(pdschRx,pdschHest,noiseVar);
+                [obj.pdschEq,csi] = nrEqualizeMMSE(pdschRx,pdschHest,noiseVar1);
 
                 % TODO:  Get the LLRs with the nrPDSCHDecode() function.
                 % Use carrier and PDSCH configuration, the equalized symbols,
